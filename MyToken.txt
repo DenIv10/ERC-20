@@ -1,0 +1,189 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+// This contract inherits from ERC20 and Ownable
+contract MyToken is ERC20, Ownable {
+    // Define the token name, symbol, and decimals
+    string public constant name = "MyToken";
+    string public constant symbol = "MTK";
+    uint8 public constant decimals = 18;
+
+    // Define the initial supply of the token
+    uint256 public totalSupply;
+
+    // Define a constructor with the initial supply
+    constructor(uint256 initialSupply) ERC20(name, symbol) {
+        totalSupply = initialSupply * 10 ** decimals;
+        // Mint the initial supply to the contract owner
+        _mint(msg.sender, totalSupply);
+    }
+
+    // Define a mint function with an address and an amount
+    function mint(address to, uint256 amount) public onlyOwner {
+        totalSupply += amount;
+        _mint(to, amount);
+    }
+
+    // Define a burn function with an amount
+    function burn(uint256 amount) public onlyOwner {
+        // Require that the amount is not zero
+        require(amount > 0, "Amount must be greater than zero");
+        // Require that the amount does not exceed the balance of the contract owner
+        require(amount <= balanceOf(msg.sender), "Insufficient balance");
+        // Transfer the amount from the contract owner to the zero address
+        _transfer(msg.sender, address(0), amount);
+        // Update the total supply
+        totalSupply -= amount;
+    }
+}
+
+
+
+Here's an example of a test.
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts/token/ERC20/utils/Tokenizer.sol";
+import "./MyToken.sol";
+
+contract MyTokenTest {
+    MyToken private token;
+    address private owner;
+    address private addr1;
+    address private addr2;
+    address private addr3;
+
+    uint256 private constant initialSupply = 1000000;
+
+    function beforeEach() public {
+        token = new MyToken(initialSupply);
+        owner = payable(token.owner());
+        addr1 = payable(address(0x1));
+        addr2 = payable(address(0x2));
+        addr3 = payable(address(0x3));
+    }
+
+    function testInitialBalance() public {
+        assertEq(token.totalSupply(), initialSupply * 10 ** token.decimals());
+        assertEq(token.balanceOf(owner), initialSupply * 10 ** token.decimals());
+    }
+
+    function testTransfer() public {
+        uint256 amount = 100;
+        token.transfer(addr1, amount);
+        assertEq(token.balanceOf(owner), initialSupply * 10 ** token.decimals() - amount);
+        assertEq(token.balanceOf(addr1), amount);
+    }
+
+    function testMint() public {
+        uint256 amount = 100;
+        token.mint(addr1, amount);
+        assertEq(token.balanceOf(addr1), amount);
+    }
+
+    function testBurn() public {
+        uint256 amount = 100;
+        token.mint(addr1, amount);
+        token.burn(amount, { from: addr1 });
+        assertEq(token.balanceOf(addr1), 0);
+        assertEq(token.totalSupply(), initialSupply * 10 ** token.decimals() - amount);
+    }
+
+    function assertEq(uint256 a, uint256 b) private pure {
+        require(a == b, "Assertion failed");
+    }
+}
+
+Here's an example of how you could add scripts to the mint, burn, and transfer.
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "./MyToken.sol";
+
+contract MyTokenMinter {
+    MyToken private token;
+    address private owner;
+
+    constructor(address tokenAddress) {
+        token = MyToken(tokenAddress);
+        owner = payable(token.owner());
+    }
+
+    function mint(address to, uint256 amount) public {
+        token.mint(to, amount);
+    }
+
+    function main() public {
+        mint(msg.sender, 1000000);
+    }
+}
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "./MyToken.sol";
+
+contract MyTokenBurner {
+    MyToken private token;
+    address private owner;
+
+    constructor(address tokenAddress) {
+        token = MyToken(tokenAddress);
+        owner = payable(token.owner());
+    }
+
+    function burn(uint256 amount) public {
+        token.burn(amount);
+    }
+
+    function main() public {
+        burn(1000000);
+    }
+}
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "./MyToken.sol";
+
+contract MyTokenTransferer {
+    MyToken private token;
+    address private owner;
+
+    constructor(address tokenAddress) {
+        token = MyToken(tokenAddress);
+        owner = payable(token.owner());
+    }
+
+    function transfer(address to, uint256 amount) public {
+        token.transfer(to, amount);
+    }
+
+    function main() public {
+        transfer(msg.sender, 1000000);
+    }
+}
+
+README.
+
+MyToken
+This is a simple ERC20 token contract with mint and burn functions.
+
+Features
+Minting new tokens and assigning them to a specific address
+Burning tokens and decreasing the total supply
+Checking the token balance of an address
+Usage
+Deployment
+To deploy the MyToken contract, you can use
+
+Is this conversation helpful so far?
+
+
+
+
